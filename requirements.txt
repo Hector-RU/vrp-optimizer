@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+ortools
+scikit-learn
+pandas
+numpy
+sqlalchemy
+pydantic
+folium
+pytest
+geopy

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VRP Pro Optimizer</title>
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Elements -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <i class="fa-solid fa-route logo-icon"></i>
+                <h2>VRP Optimizer</h2>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="active" data-target="dashboard"><i class="fa-solid fa-chart-pie"></i>
+                        Dashboard</a></li>
+                <li><a href="#" data-target="orders"><i class="fa-solid fa-box"></i> Pedidos</a></li>
+                <li><a href="#" data-target="vehicles"><i class="fa-solid fa-truck"></i> Vehículos</a></li>
+                <li><a href="#" data-target="routing"><i class="fa-solid fa-map-location-dot"></i> Motor de Ruta</a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-nav">
+                <div class="search-bar">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" placeholder="Buscar pedido, vehículo...">
+                </div>
+                <div class="user-profile">
+                    <div class="avatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <span>Administrador</span>
+                </div>
+            </header>
+
+            <!-- Sections -->
+            <div class="content-wrapper">
+
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="view-section active">
+                    <div class="section-header">
+                        <h1 class="section-title">Resumen y Analíticas</h1>
+                        <button class="btn btn-accent" id="btn-seed-data"><i class="fa-solid fa-seedling"></i> Inyectar
+                            Datos DR</button>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card glass style-card">
+                            <div class="icon-wrap tx-blue">
+                                <i class="fa-solid fa-cubes"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Total Pedidos</h3>
+                                <p id="stat-orders">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card glass style-card">
+                            <div class="icon-wrap tx-green">
+                                <i class="fa-solid fa-truck-fast"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Vehículos Disp.</h3>
+                                <p id="stat-vehicles">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card glass style-card">
+                            <div class="icon-wrap tx-purple">
+                                <i class="fa-solid fa-map"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Rutas Generadas</h3>
+                                <p id="stat-routes">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recent-activity-container glass p-6 mt-6">
+                        <h2>Panel Rápido</h2>
+                        <p>Bienvenido al sistema VRP avanzado. Utiliza "Inyectar Datos DR" para llenar el sistema
+                            instantáneamente con ubicaciones en República Dominicana y 4 Vehículos (el primer registro
+                            será tomado como Depot central siempre).</p>
+                    </div>
+                </section>
+
+                <!-- Orders Section -->
+                <section id="orders" class="view-section hidden">
+                    <div class="section-header">
+                        <h1 class="section-title">Gestión de Pedidos</h1>
+                        <button class="btn btn-primary" onclick="toggleModal('modal-order')"><i
+                                class="fa-solid fa-plus"></i> Nuevo
+                            Pedido</button>
+                    </div>
+
+                    <div class="table-container glass mt-4">
+                        <table id="orders-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Cliente</th>
+                                    <th>Lat, Lng</th>
+                                    <th>Demanda</th>
+                                    <th>Ventana (min)</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Filled dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Vehicles Section -->
+                <section id="vehicles" class="view-section hidden">
+                    <div class="section-header">
+                        <h1 class="section-title">Flota de Vehículos</h1>
+                        <button class="btn btn-primary" onclick="toggleModal('modal-vehicle')"><i
+                                class="fa-solid fa-plus"></i>
+                            Añadir Vehículo</button>
+                    </div>
+
+                    <div class="table-container glass mt-4">
+                        <table id="vehicles-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Capacidad</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Filled dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Routing Engine Section -->
+                <section id="routing" class="view-section hidden">
+                    <div class="section-header">
+                        <h1 class="section-title">Generación de Rutas Estratégicas</h1>
+                        <button class="btn btn-accent" id="btn-generate-routes"><i class="fa-solid fa-microchip"></i>
+                            Ejecutar VRP Solver</button>
+                    </div>
+
+                    <div class="route-results mt-4">
+                        <div class="map-container glass">
+                            <iframe id="map-iframe" src="" frameborder="0"></iframe>
+                            <div class="map-overlay" id="map-overlay">
+                                <p>Ejecuta el Solver para visualizar el mapa de rutas.</p>
+                            </div>
+                        </div>
+
+                        <div class="table-container glass mt-6">
+                            <h2>Resultados de Enrutamiento</h2>
+                            <table id="routes-table">
+                                <thead>
+                                    <tr>
+                                        <th>Ruta ID</th>
+                                        <th>Vehículo ID</th>
+                                        <th>Secuencia de Entrega</th>
+                                        <th>Distancia (km)</th>
+                                        <th>ETA (min)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Filled dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-backdrop hidden" id="modal-order">
+        <div class="modal glass">
+            <div class="modal-header">
+                <h3>Registrar Nuevo Pedido</h3>
+                <button class="close-btn" onclick="toggleModal('modal-order')"><i
+                        class="fa-solid fa-times"></i></button>
+            </div>
+            <form id="form-order" class="modal-form">
+                <div class="form-group">
+                    <label>Nombre del Cliente</label>
+                    <input type="text" name="customer_name" required>
+                </div>
+                <div class="form-group row">
+                    <div class="col">
+                        <label>Latitud</label>
+                        <input type="number" step="any" name="lat" required placeholder="Ej: 40.7128">
+                    </div>
+                    <div class="col">
+                        <label>Longitud</label>
+                        <input type="number" step="any" name="lng" required placeholder="Ej: -74.0060">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Demanda (Ej: Cajas / Peso)</label>
+                    <input type="number" name="demand" required placeholder="10">
+                </div>
+                <div class="form-group row">
+                    <div class="col">
+                        <label>Inicio Ventana (min)</label>
+                        <input type="number" name="window_start" value="0" required>
+                    </div>
+                    <div class="col">
+                        <label>Fin Ventana (min)</label>
+                        <input type="number" name="window_end" value="1440" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-full mt-4">Guardar Pedido</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-backdrop hidden" id="modal-vehicle">
+        <div class="modal glass">
+            <div class="modal-header">
+                <h3>Añadir Vehículo</h3>
+                <button class="close-btn" onclick="toggleModal('modal-vehicle')"><i
+                        class="fa-solid fa-times"></i></button>
+            </div>
+            <form id="form-vehicle" class="modal-form">
+                <div class="form-group">
+                    <label>Identificador o Nombre (Ej: Camión 1)</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Capacidad Máxima</label>
+                    <input type="number" name="capacity" required placeholder="50">
+                </div>
+                <button type="submit" class="btn btn-primary w-full mt-4">Guardar Vehículo</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast hidden">
+        <i class="fa-solid fa-info-circle"></i>
+        <span id="toast-message">Notificación</span>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>
