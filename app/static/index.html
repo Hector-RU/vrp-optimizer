@@ -41,6 +41,9 @@
                     <input type="text" placeholder="Buscar pedido, vehículo...">
                 </div>
                 <div class="user-profile">
+                    <button id="theme-toggle" class="btn" style="background: transparent; border: none; font-size: 1.2rem; color: var(--text-muted); cursor: pointer; padding: 0 10px;">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
                     <div class="avatar">
                         <i class="fa-solid fa-user"></i>
                     </div>
@@ -88,11 +91,35 @@
                         </div>
                     </div>
 
+                    <div class="charts-grid mt-6" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="chart-container glass p-4" style="position: relative; height: 300px;">
+                            <h3 style="margin-bottom: 15px; color: var(--text-muted);">Demanda por Cliente (Top 10)</h3>
+                            <canvas id="demandChart"></canvas>
+                        </div>
+                        <div class="chart-container glass p-4" style="position: relative; height: 300px;">
+                            <h3 style="margin-bottom: 15px; color: var(--text-muted);">Métricas de Rutas de Entrega</h3>
+                            <canvas id="routeMetricsChart"></canvas>
+                        </div>
+                    </div>
+
                     <div class="recent-activity-container glass p-6 mt-6">
                         <h2>Panel Rápido</h2>
                         <p>Bienvenido al sistema VRP avanzado. Utiliza "Inyectar Datos DR" para llenar el sistema
-                            instantáneamente con ubicaciones en República Dominicana y 4 Vehículos (el primer registro
-                            será tomado como Depot central siempre).</p>
+                            instantáneamente con ubicaciones en República Dominicana y 4 Vehículos.</p>
+                        <div class="quick-stats mt-4" style="display: flex; gap: 20px; font-weight: 500;">
+                            <div style="flex: 1; text-align: center; border-right: 1px solid rgba(255,255,255,0.1);">
+                                <span style="display: block; font-size: 0.9em; color: var(--text-muted);">Total Demanda (Uds)</span>
+                                <span id="stat-total-demand" style="font-size: 1.5em; color: #3b82f6;">0</span>
+                            </div>
+                            <div style="flex: 1; text-align: center; border-right: 1px solid rgba(255,255,255,0.1);">
+                                <span style="display: block; font-size: 0.9em; color: var(--text-muted);">Capacidad Total Flota</span>
+                                <span id="stat-total-capacity" style="font-size: 1.5em; color: #10b981;">0</span>
+                            </div>
+                            <div style="flex: 1; text-align: center;">
+                                <span style="display: block; font-size: 0.9em; color: var(--text-muted);">Distancia Total Estimada</span>
+                                <span id="stat-total-distance" style="font-size: 1.5em; color: #8b5cf6;">0 km</span>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -100,7 +127,7 @@
                 <section id="orders" class="view-section hidden">
                     <div class="section-header">
                         <h1 class="section-title">Gestión de Pedidos</h1>
-                        <button class="btn btn-primary" onclick="toggleModal('modal-order')"><i
+                        <button class="btn btn-primary" onclick="prepareNewOrder()"><i
                                 class="fa-solid fa-plus"></i> Nuevo
                             Pedido</button>
                     </div>
@@ -128,7 +155,7 @@
                 <section id="vehicles" class="view-section hidden">
                     <div class="section-header">
                         <h1 class="section-title">Flota de Vehículos</h1>
-                        <button class="btn btn-primary" onclick="toggleModal('modal-vehicle')"><i
+                        <button class="btn btn-primary" onclick="prepareNewVehicle()"><i
                                 class="fa-solid fa-plus"></i>
                             Añadir Vehículo</button>
                     </div>
@@ -193,11 +220,12 @@
     <div class="modal-backdrop hidden" id="modal-order">
         <div class="modal glass">
             <div class="modal-header">
-                <h3>Registrar Nuevo Pedido</h3>
+                <h3 id="modal-order-title">Registrar Nuevo Pedido</h3>
                 <button class="close-btn" onclick="toggleModal('modal-order')"><i
                         class="fa-solid fa-times"></i></button>
             </div>
             <form id="form-order" class="modal-form">
+                <input type="hidden" name="id" id="order-id">
                 <div class="form-group">
                     <label>Nombre del Cliente</label>
                     <input type="text" name="customer_name" required>
@@ -226,7 +254,7 @@
                         <input type="number" name="window_end" value="1440" required>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary w-full mt-4">Guardar Pedido</button>
+                <button type="submit" class="btn btn-primary w-full mt-4" id="btn-order-submit">Guardar Pedido</button>
             </form>
         </div>
     </div>
@@ -234,11 +262,12 @@
     <div class="modal-backdrop hidden" id="modal-vehicle">
         <div class="modal glass">
             <div class="modal-header">
-                <h3>Añadir Vehículo</h3>
+                <h3 id="modal-vehicle-title">Añadir Vehículo</h3>
                 <button class="close-btn" onclick="toggleModal('modal-vehicle')"><i
                         class="fa-solid fa-times"></i></button>
             </div>
             <form id="form-vehicle" class="modal-form">
+                <input type="hidden" name="id" id="vehicle-id">
                 <div class="form-group">
                     <label>Identificador o Nombre (Ej: Camión 1)</label>
                     <input type="text" name="name" required>
@@ -247,7 +276,7 @@
                     <label>Capacidad Máxima</label>
                     <input type="number" name="capacity" required placeholder="50">
                 </div>
-                <button type="submit" class="btn btn-primary w-full mt-4">Guardar Vehículo</button>
+                <button type="submit" class="btn btn-primary w-full mt-4" id="btn-vehicle-submit">Guardar Vehículo</button>
             </form>
         </div>
     </div>
@@ -258,7 +287,9 @@
         <span id="toast-message">Notificación</span>
     </div>
 
-    <script src="/static/js/app.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/app.js?v=4"></script>
 </body>
 
 </html>

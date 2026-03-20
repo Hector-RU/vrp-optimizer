@@ -91,10 +91,115 @@ async function fetchDashboardData() {
     }
 }
 
+let demandChartInstance = null;
+let routeMetricsChartInstance = null;
+
 function renderStats() {
     document.getElementById('stat-orders').textContent = appState.orders.length;
     document.getElementById('stat-vehicles').textContent = appState.vehicles.length;
     document.getElementById('stat-routes').textContent = appState.routes.length;
+
+    // Quick Stats Calculation
+    const totalDemand = appState.orders.reduce((sum, o) => sum + o.demand, 0);
+    const totalCapacity = appState.vehicles.reduce((sum, v) => sum + v.capacity, 0);
+    const totalDistance = appState.routes.reduce((sum, r) => sum + r.total_distance, 0);
+
+    document.getElementById('stat-total-demand').textContent = totalDemand;
+    document.getElementById('stat-total-capacity').textContent = totalCapacity;
+    document.getElementById('stat-total-distance').textContent = totalDistance.toFixed(2) + ' km';
+
+    renderCharts();
+}
+
+function renderCharts() {
+    const isLightMode = document.documentElement.classList.contains('light-mode');
+    const gridColor = isLightMode ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
+    const borderColor = isLightMode ? '#ffffff' : '#1e293b';
+
+    // 1. Demand By Customer Chart (Top 10)
+    if (demandChartInstance) demandChartInstance.destroy();
+
+    const sortedOrders = [...appState.orders].sort((a, b) => b.demand - a.demand).slice(0, 10);
+    const demandLabels = sortedOrders.map(o => o.customer_name);
+    const demandData = sortedOrders.map(o => o.demand);
+
+    const ctxDemand = document.getElementById('demandChart').getContext('2d');
+    demandChartInstance = new Chart(ctxDemand, {
+        type: 'bar',
+        data: {
+            labels: demandLabels,
+            datasets: [{
+                label: 'Demanda (Unidades)',
+                data: demandData,
+                backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                borderColor: '#3b82f6',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: gridColor } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // 2. Route Metrics Chart
+    if (routeMetricsChartInstance) routeMetricsChartInstance.destroy();
+    
+    const ctxRoutes = document.getElementById('routeMetricsChart').getContext('2d');
+    
+    if (appState.routes.length === 0) {
+        // Show empty placeholder or empty chart
+        routeMetricsChartInstance = new Chart(ctxRoutes, {
+            type: 'doughnut',
+            data: {
+                labels: ['Sin Rutas'],
+                datasets: [{ data: [1], backgroundColor: ['#334155'] }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+        return;
+    }
+
+    const routeLabels = appState.routes.map(r => `Veh. #${r.vehicle_id}`);
+    const routeDistances = appState.routes.map(r => r.total_distance);
+
+    routeMetricsChartInstance = new Chart(ctxRoutes, {
+        type: 'polarArea',
+        data: {
+            labels: routeLabels,
+            datasets: [{
+                label: 'Distancia (km)',
+                data: routeDistances,
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.7)',
+                    'rgba(16, 185, 129, 0.7)',
+                    'rgba(245, 158, 11, 0.7)',
+                    'rgba(139, 92, 246, 0.7)',
+                    'rgba(236, 72, 153, 0.7)'
+                ],
+                borderWidth: 1,
+                borderColor: borderColor
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right' }
+            },
+            scales: {
+                r: { grid: { color: gridColor } }
+            }
+        }
+    });
 }
 
 function renderOrders() {
@@ -106,10 +211,12 @@ function renderOrders() {
                 <td>#${o.id}</td>
                 <td>${o.customer_name}</td>
                 <td>${o.lat.toFixed(4)}, ${o.lng.toFixed(4)}</td>
-                <td>${o.lat.toFixed(4)}, ${o.lng.toFixed(4)}</td>
                 <td>${o.demand}</td>
                 <td>${o.window_start} - ${o.window_end}</td>
                 <td>
+                    <button class="btn btn-primary" style="padding: 6px 10px; background: #3b82f6;" onclick="editOrder(${o.id})">
+                        <i class="fa-solid fa-edit"></i>
+                    </button>
                     <button class="btn btn-primary" style="padding: 6px 10px; background: #ef4444;" onclick="deleteOrder(${o.id})">
                         <i class="fa-solid fa-trash"></i>
                     </button>
@@ -129,6 +236,9 @@ function renderVehicles() {
                 <td>${v.name}</td>
                 <td>${v.capacity} u.</td>
                 <td>
+                    <button class="btn btn-primary" style="padding: 6px 10px; background: #3b82f6;" onclick="editVehicle(${v.id})">
+                        <i class="fa-solid fa-edit"></i>
+                    </button>
                     <button class="btn btn-primary" style="padding: 6px 10px; background: #ef4444;" onclick="deleteVehicle(${v.id})">
                         <i class="fa-solid fa-trash"></i>
                     </button>
@@ -166,6 +276,58 @@ async function deleteVehicle(id) {
     } catch (e) {
         showToast("Error de conexión", true);
     }
+}
+
+function editOrder(id) {
+    const order = appState.orders.find(o => o.id === id);
+    if (!order) return;
+
+    const form = document.getElementById('form-order');
+    document.getElementById('modal-order-title').textContent = "Editar Pedido #" + id;
+    document.getElementById('btn-order-submit').textContent = "Actualizar Pedido";
+    
+    form.elements['id'].value = order.id;
+    form.elements['customer_name'].value = order.customer_name;
+    form.elements['lat'].value = order.lat;
+    form.elements['lng'].value = order.lng;
+    form.elements['demand'].value = order.demand;
+    form.elements['window_start'].value = order.window_start;
+    form.elements['window_end'].value = order.window_end;
+
+    toggleModal('modal-order');
+}
+
+function editVehicle(id) {
+    const vehicle = appState.vehicles.find(v => v.id === id);
+    if (!vehicle) return;
+
+    const form = document.getElementById('form-vehicle');
+    document.getElementById('modal-vehicle-title').textContent = "Editar Vehículo #" + id;
+    document.getElementById('btn-vehicle-submit').textContent = "Actualizar Vehículo";
+
+    form.elements['id'].value = vehicle.id;
+    form.elements['name'].value = vehicle.name;
+    form.elements['capacity'].value = vehicle.capacity;
+
+    toggleModal('modal-vehicle');
+}
+
+function prepareNewOrder() {
+    const form = document.getElementById('form-order');
+    form.reset();
+    document.getElementById('order-id').value = "";
+    document.getElementById('modal-order-title').textContent = "Registrar Nuevo Pedido";
+    document.getElementById('btn-order-submit').textContent = "Guardar Pedido";
+    toggleModal('modal-order');
+}
+
+function prepareNewVehicle() {
+    const form = document.getElementById('form-vehicle');
+    form.reset();
+    document.getElementById('vehicle-id').value = "";
+    document.getElementById('modal-vehicle-title').textContent = "Añadir Vehículo";
+    document.getElementById('btn-vehicle-submit').textContent = "Guardar Vehículo";
+    toggleModal('modal-vehicle');
 }
 
 function renderRoutes() {
@@ -209,13 +371,19 @@ document.getElementById('form-order').addEventListener('submit', async (e) => {
     data.window_end = parseInt(data.window_end);
 
     try {
-        const res = await fetch('/api/orders', {
-            method: 'POST',
+        const id = data.id;
+        delete data.id; // Don't send ID in body for create, and keep it separate for update path if needed
+
+        const url = id ? `/api/orders/${id}` : '/api/orders';
+        const method = id ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
         if (res.ok) {
-            showToast("Pedido guardado exitosamente");
+            showToast(id ? "Pedido actualizado" : "Pedido guardado exitosamente");
             toggleModal('modal-order');
             e.target.reset();
             fetchDashboardData();
@@ -232,13 +400,19 @@ document.getElementById('form-vehicle').addEventListener('submit', async (e) => 
     data.capacity = parseInt(data.capacity);
 
     try {
-        const res = await fetch('/api/vehicles', {
-            method: 'POST',
+        const id = data.id;
+        delete data.id;
+
+        const url = id ? `/api/vehicles/${id}` : '/api/vehicles';
+        const method = id ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
         if (res.ok) {
-            showToast("Vehículo guardado exitosamente");
+            showToast(id ? "Vehículo actualizado" : "Vehículo guardado exitosamente");
             toggleModal('modal-vehicle');
             e.target.reset();
             fetchDashboardData();
@@ -291,6 +465,28 @@ if (btnSeedData) {
         } finally {
             btnSeedData.innerHTML = '<i class="fa-solid fa-seedling"></i> Inyectar Datos DR';
             btnSeedData.disabled = false;
+        }
+    });
+}
+
+// Theme Logic
+const themeToggleBtn = document.getElementById('theme-toggle');
+if (themeToggleBtn) {
+    const currentTheme = localStorage.getItem('theme');
+    if (currentTheme === 'light') {
+        document.documentElement.classList.add('light-mode');
+        themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+        document.documentElement.classList.toggle('light-mode');
+        const isLight = document.documentElement.classList.contains('light-mode');
+        
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        themeToggleBtn.innerHTML = isLight ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+        
+        if (appState.orders.length > 0) {
+            renderCharts();
         }
     });
 }

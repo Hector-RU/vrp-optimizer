@@ -33,6 +33,20 @@ def delete_order(order_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Order deleted"}
 
+@router.put("/orders/{order_id}", response_model=schemas.Order)
+def update_order(order_id: int, order: schemas.OrderUpdate, db: Session = Depends(get_db)):
+    db_order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if not db_order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    update_data = order.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_order, key, value)
+    
+    db.commit()
+    db.refresh(db_order)
+    return db_order
+
 
 @router.post("/vehicles", response_model=schemas.Vehicle)
 def create_vehicle(vehicle: schemas.VehicleCreate, db: Session = Depends(get_db)):
@@ -54,6 +68,20 @@ def delete_vehicle(vehicle_id: int, db: Session = Depends(get_db)):
     db.delete(db_vehicle)
     db.commit()
     return {"message": "Vehicle deleted"}
+
+@router.put("/vehicles/{vehicle_id}", response_model=schemas.Vehicle)
+def update_vehicle(vehicle_id: int, vehicle: schemas.VehicleUpdate, db: Session = Depends(get_db)):
+    db_vehicle = db.query(models.Vehicle).filter(models.Vehicle.id == vehicle_id).first()
+    if not db_vehicle:
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+    
+    update_data = vehicle.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_vehicle, key, value)
+    
+    db.commit()
+    db.refresh(db_vehicle)
+    return db_vehicle
 
 
 

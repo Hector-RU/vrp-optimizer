@@ -11,9 +11,25 @@
     --blue: #3b82f6;
     --green: #10b981;
     --purple: #8b5cf6;
+    --purple: #8b5cf6;
     --font-family: 'Inter', sans-serif;
+    --input-bg: rgba(0, 0, 0, 0.2);
+    --overlay-bg: rgba(15, 23, 42, 0.8);
 }
 
+:root.light-mode {
+    --bg-base: #f8fafc;
+    --panel-bg: rgba(255, 255, 255, 0.8);
+    --panel-border: rgba(0, 0, 0, 0.08);
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --accent: #ec4899;
+    --accent-hover: #db2777;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --input-bg: rgba(0, 0, 0, 0.05);
+    --overlay-bg: rgba(255, 255, 255, 0.8);
+}
 * {
     margin: 0; padding: 0; box-sizing: border-box;
 }
@@ -55,14 +71,13 @@ body {
     width: 260px;
     height: 100vh;
     border-right: 1px solid var(--panel-border);
-    background: rgba(15, 23, 42, 0.8);
+    background: var(--overlay-bg);
     backdrop-filter: blur(10px);
     display: flex;
     flex-direction: column;
     position: sticky;
     top: 0;
 }
-
 .sidebar-header {
     padding: 24px;
     display: flex;
@@ -119,13 +134,12 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 0 32px;
-    background: rgba(15, 23, 42, 0.5);
+    background: var(--overlay-bg);
     backdrop-filter: blur(8px);
     position: sticky;
     top: 0;
     z-index: 10;
 }
-
 .search-bar {
     display: flex;
     align-items: center;
@@ -255,7 +269,7 @@ th, td {
 
 th { font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em; }
 tbody tr { transition: background 0.2s; }
-tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
+tbody tr:hover { background: var(--panel-border); }
 
 /* Motor de Ruta */
 .map-container {
@@ -274,7 +288,7 @@ tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
 .map-overlay {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(15, 23, 42, 0.8);
+    background: var(--overlay-bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -283,7 +297,6 @@ tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
     z-index: 5;
     transition: opacity 0.3s;
 }
-
 .map-overlay.hide { opacity: 0; pointer-events: none; }
 
 /* Modals */
@@ -321,10 +334,10 @@ tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
 input[type="text"], input[type="number"] {
     width: 100%;
     padding: 10px 14px;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--input-bg);
     border: 1px solid var(--panel-border);
     border-radius: 6px;
-    color: white;
+    color: var(--text-main);
     font-family: inherit;
     transition: border-color 0.2s;
 }

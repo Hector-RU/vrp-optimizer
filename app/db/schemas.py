@@ -12,6 +12,14 @@ class OrderBase(BaseModel):
 class OrderCreate(OrderBase):
     pass
 
+class OrderUpdate(BaseModel):
+    customer_name: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    demand: Optional[int] = None
+    window_start: Optional[int] = None
+    window_end: Optional[int] = None
+
 class Order(OrderBase):
     id: int
 
@@ -24,6 +32,10 @@ class VehicleBase(BaseModel):
 
 class VehicleCreate(VehicleBase):
     pass
+
+class VehicleUpdate(BaseModel):
+    name: Optional[str] = None
+    capacity: Optional[int] = None
 
 class Vehicle(VehicleBase):
     id: int
