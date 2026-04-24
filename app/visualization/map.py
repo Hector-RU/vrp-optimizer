@@ -2,13 +2,12 @@ import folium
 from folium import plugins
 from typing import List, Dict
 import requests
+import os
 
 def get_osrm_route(coords):
-    # coords should be list of (lat, lng)
     if len(coords) < 2:
         return coords
         
-    # OSRM expects lng,lat
     coords_str = ";".join([f"{lng},{lat}" for lat, lng in coords])
     url = f"http://router.project-osrm.org/route/v1/driving/{coords_str}?overview=full&geometries=geojson"
     try:
@@ -16,27 +15,29 @@ def get_osrm_route(coords):
         if r.status_code == 200:
             data = r.json()
             if data['code'] == 'Ok':
-                # GeoJSON returns [lng, lat]
                 route = data['routes'][0]['geometry']['coordinates']
-                # folium expects [lat, lng]
                 return [[lat, lng] for lng, lat in route]
     except Exception as e:
         print(f"OSRM Error: {e}")
     
     return coords
 
-def generate_route_map(routes_data: List[Dict], orders_data: List[Dict], output_file: str = "routes_map.html"):
-    """
-    Genera un mapa HTML de Folium mostrando las rutas conectadas por calles vía OSRM.
-    """
+def generate_route_map(routes_data: List[Dict], orders_data: List[Dict], output_file: str = None):
     if not orders_data:
-        return
+        return None
+    
+    if output_file is None:
+        output_file = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), 
+            "static", "maps", "routes_map.html"
+        )
+    
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
         
     depot = next((o for o in orders_data if o['id'] == 1), orders_data[0])
     
     m = folium.Map(location=[depot['lat'], depot['lng']], zoom_start=9)
     
-    # Marcador para el depot destacado
     folium.Marker(
         [depot['lat'], depot['lng']], 
         popup='Depot Central', 
@@ -45,10 +46,8 @@ def generate_route_map(routes_data: List[Dict], orders_data: List[Dict], output_
 
     colors = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#14b8a6', '#f43f5e', '#6366f1']
     
-    # Dibuja rutas
     for i, route in enumerate(routes_data):
         color = colors[i % len(colors)]
-        
         sequence = route.get('sequence', [])
         
         stop_coords = []
@@ -75,10 +74,8 @@ def generate_route_map(routes_data: List[Dict], orders_data: List[Dict], output_
                 ).add_to(m)
                 stop_number += 1
                 
-        # Fetch actual street route via OSRM
         real_route_coords = get_osrm_route(stop_coords)
                 
-        # Dibuja las lineas animadas con flechas sobre el camino real
         plugins.AntPath(
             locations=real_route_coords,
             delay=1000,

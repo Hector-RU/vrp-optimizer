@@ -38,6 +38,12 @@ navLinks.forEach(link => {
 });
 
 // Utility Functions
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 function toggleModal(modalId) {
     const modal = document.getElementById(modalId);
     modal.classList.toggle('hidden');
@@ -47,11 +53,10 @@ function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
     document.getElementById('toast-message').textContent = message;
 
-    // Changing color according to status
     if (isError) {
-        toast.style.background = '#ef4444'; // red
+        toast.style.background = '#ef4444';
     } else {
-        toast.style.background = '#10b981'; // green
+        toast.style.background = '#10b981';
     }
 
     toast.classList.remove('hidden');
@@ -61,6 +66,17 @@ function showToast(message, isError = false) {
         toast.classList.remove('show');
         setTimeout(() => toast.classList.add('hidden'), 300);
     }, 3000);
+}
+
+function setLoading(button, loading) {
+    if (loading) {
+        button.disabled = true;
+        button.dataset.originalText = button.innerHTML;
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    } else {
+        button.disabled = false;
+        button.innerHTML = button.dataset.originalText || button.innerHTML;
+    }
 }
 
 // API Calls & Render
@@ -116,11 +132,10 @@ function renderCharts() {
     const gridColor = isLightMode ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
     const borderColor = isLightMode ? '#ffffff' : '#1e293b';
 
-    // 1. Demand By Customer Chart (Top 10)
     if (demandChartInstance) demandChartInstance.destroy();
 
     const sortedOrders = [...appState.orders].sort((a, b) => b.demand - a.demand).slice(0, 10);
-    const demandLabels = sortedOrders.map(o => o.customer_name);
+    const demandLabels = sortedOrders.map(o => escapeHtml(o.customer_name));
     const demandData = sortedOrders.map(o => o.demand);
 
     const ctxDemand = document.getElementById('demandChart').getContext('2d');
@@ -209,7 +224,7 @@ function renderOrders() {
         tbody.innerHTML += `
             <tr>
                 <td>#${o.id}</td>
-                <td>${o.customer_name}</td>
+                <td>${escapeHtml(o.customer_name)}</td>
                 <td>${o.lat.toFixed(4)}, ${o.lng.toFixed(4)}</td>
                 <td>${o.demand}</td>
                 <td>${o.window_start} - ${o.window_end}</td>
@@ -233,7 +248,7 @@ function renderVehicles() {
         tbody.innerHTML += `
             <tr>
                 <td>#${v.id}</td>
-                <td>${v.name}</td>
+                <td>${escapeHtml(v.name)}</td>
                 <td>${v.capacity} u.</td>
                 <td>
                     <button class="btn btn-primary" style="padding: 6px 10px; background: #3b82f6;" onclick="editVehicle(${v.id})">

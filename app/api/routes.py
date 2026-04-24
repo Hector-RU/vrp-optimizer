@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy.exc import SQLAlchemyError
+from typing import List, Optional
 import json
 import os
 from fastapi.responses import FileResponse
@@ -9,6 +10,8 @@ from app.db import schemas, models
 from app.db.database import get_db
 from app.vrp.solver import solve_vrp
 from app.visualization.map import generate_route_map
+from app.config import config
+from app.logging import logger
 
 router = APIRouter()
 
@@ -21,8 +24,21 @@ def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
     return db_order
 
 @router.get("/orders", response_model=List[schemas.Order])
-def get_orders(db: Session = Depends(get_db)):
-    return db.query(models.Order).all()
+def get_orders(
+    db: Session = Depends(get_db),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=500),
+    search: Optional[str] = Query(default=None)
+):
+    query = db.query(models.Order)
+    if search:
+        query = query.filter(models.Order.customer_name.ilike(f"%{search}%"))
+    total = query.count()
+    return query.offset(skip).limit(limit).all()
+
+@router.get("/orders/count")
+def get_orders_count(db: Session = Depends(get_db)):
+    return {"total": db.query(models.Order).count()}
 
 @router.delete("/orders/{order_id}")
 def delete_order(order_id: int, db: Session = Depends(get_db)):
@@ -57,8 +73,12 @@ def create_vehicle(vehicle: schemas.VehicleCreate, db: Session = Depends(get_db)
     return db_vehicle
 
 @router.get("/vehicles", response_model=List[schemas.Vehicle])
-def get_vehicles(db: Session = Depends(get_db)):
-    return db.query(models.Vehicle).all()
+def get_vehicles(
+    db: Session = Depends(get_db),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=500)
+):
+    return db.query(models.Vehicle).offset(skip).limit(limit).all()
 
 @router.delete("/vehicles/{vehicle_id}")
 def delete_vehicle(vehicle_id: int, db: Session = Depends(get_db)):
@@ -95,38 +115,46 @@ def generate_routes(db: Session = Depends(get_db)):
     if not vehicles:
         raise HTTPException(status_code=400, detail="No vehicles available.")
 
-    # Sort orders by ID. Assuming depot is the first order (id=1 or minimum id)
     orders = sorted(orders, key=lambda x: x.id)
 
+    logger.info(f"Starting VRP solve with {len(orders)} orders and {len(vehicles)} vehicles")
+    
     routes = solve_vrp(orders, vehicles)
     
     if routes is None:
-         raise HTTPException(status_code=400, detail="Could not find a feasible solution for the given constraints.")
+        logger.error("VRP solver could not find feasible solution")
+        raise HTTPException(status_code=400, detail="Could not find a feasible solution for the given constraints.")
 
-    # Save to db
-    saved_routes = []
-    # clean old routes
-    db.query(models.Route).delete()
-    
-    for r in routes:
-        vehicle_entity = vehicles[r["vehicle_id"]]
-        db_route = models.Route(
-            vehicle_id=vehicle_entity.id,
-            total_distance=r["distance_km"],
-            total_time=r["time_mins"],
-            route_sequence=json.dumps(r["sequence"])
-        )
-        db.add(db_route)
-        saved_routes.append(db_route)
-    
-    db.commit()
-    for sr in saved_routes:
-        db.refresh(sr)
+    try:
+        db.query(models.Route).delete()
+        db.flush()
         
-    return {"message": "Routes generated successfully", "routes": [
-        {"id": sr.id, "vehicle_id": sr.vehicle_id, "distance_km": sr.total_distance, "time_mins": sr.total_time, "sequence": json.loads(sr.route_sequence)} 
-        for sr in saved_routes
-    ]}
+        saved_routes = []
+        for r in routes:
+            vehicle_entity = vehicles[r["vehicle_id"]]
+            db_route = models.Route(
+                vehicle_id=vehicle_entity.id,
+                total_distance=r["distance_km"],
+                total_time=r["time_mins"],
+                route_sequence=json.dumps(r["sequence"])
+            )
+            db.add(db_route)
+            saved_routes.append(db_route)
+        
+        db.commit()
+        for sr in saved_routes:
+            db.refresh(sr)
+            
+        logger.info(f"Successfully generated {len(saved_routes)} routes")
+        
+        return {"message": "Routes generated successfully", "routes": [
+            {"id": sr.id, "vehicle_id": sr.vehicle_id, "distance_km": sr.total_distance, "time_mins": sr.total_time, "sequence": json.loads(sr.route_sequence)} 
+            for sr in saved_routes
+        ]}
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error during route generation: {e}")
+        raise HTTPException(status_code=500, detail="Database error during route generation")
 
 @router.get("/routes", response_model=List[schemas.Route])
 def get_routes(db: Session = Depends(get_db)):
@@ -144,13 +172,15 @@ def get_routes_map(db: Session = Depends(get_db)):
     orders_data = [{"id": o.id, "lat": o.lat, "lng": o.lng, "customer_name": o.customer_name} for o in orders]
     routes_data = [{"vehicle_id": r.vehicle_id, "sequence": json.loads(r.route_sequence)} for r in routes]
     
-    map_file = "routes_map.html"
+    map_file = os.path.join(config.MAP_OUTPUT_DIR, "routes_map.html")
     generate_route_map(routes_data, orders_data, output_file=map_file)
     
     if os.path.exists(map_file):
+        logger.info(f"Map generated at {map_file}")
         return FileResponse(map_file)
     else:
-         raise HTTPException(status_code=500, detail="Error generating map")
+        logger.error("Failed to generate map")
+        raise HTTPException(status_code=500, detail="Error generating map")
 
 @router.post("/routes/reroute")
 def reroute_orders(db: Session = Depends(get_db)):

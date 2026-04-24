@@ -228,30 +228,30 @@
                 <input type="hidden" name="id" id="order-id">
                 <div class="form-group">
                     <label>Nombre del Cliente</label>
-                    <input type="text" name="customer_name" required>
+                    <input type="text" name="customer_name" required minlength="1" maxlength="100" pattern="^[\w\s\-áéíóúüñÁÉÍÓÚÜÑ]+$" title="Solo letras, números, espacios y guiones">
                 </div>
                 <div class="form-group row">
                     <div class="col">
                         <label>Latitud</label>
-                        <input type="number" step="any" name="lat" required placeholder="Ej: 40.7128">
+                        <input type="number" step="any" name="lat" required min="-90" max="90" placeholder="Ej: 40.7128">
                     </div>
                     <div class="col">
                         <label>Longitud</label>
-                        <input type="number" step="any" name="lng" required placeholder="Ej: -74.0060">
+                        <input type="number" step="any" name="lng" required min="-180" max="180" placeholder="Ej: -74.0060">
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Demanda (Ej: Cajas / Peso)</label>
-                    <input type="number" name="demand" required placeholder="10">
+                    <input type="number" name="demand" required min="0" max="10000" placeholder="10">
                 </div>
                 <div class="form-group row">
                     <div class="col">
                         <label>Inicio Ventana (min)</label>
-                        <input type="number" name="window_start" value="0" required>
+                        <input type="number" name="window_start" value="0" required min="0" max="1440">
                     </div>
                     <div class="col">
                         <label>Fin Ventana (min)</label>
-                        <input type="number" name="window_end" value="1440" required>
+                        <input type="number" name="window_end" value="1440" required min="0" max="1440">
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary w-full mt-4" id="btn-order-submit">Guardar Pedido</button>
@@ -270,11 +270,11 @@
                 <input type="hidden" name="id" id="vehicle-id">
                 <div class="form-group">
                     <label>Identificador o Nombre (Ej: Camión 1)</label>
-                    <input type="text" name="name" required>
+                    <input type="text" name="name" required minlength="1" maxlength="100">
                 </div>
                 <div class="form-group">
                     <label>Capacidad Máxima</label>
-                    <input type="number" name="capacity" required placeholder="50">
+                    <input type="number" name="capacity" required min="1" max="10000" placeholder="50">
                 </div>
                 <button type="submit" class="btn btn-primary w-full mt-4" id="btn-vehicle-submit">Guardar Vehículo</button>
             </form>
