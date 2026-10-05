@@ -1,295 +1,569 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VRP Pro Optimizer</title>
-    <!-- Modern Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome Elements -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom Styles -->
-    <link rel="stylesheet" href="/static/css/styles.css">
-</head>
-
-<body>
-
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Planifica entregas, administra tu flota y optimiza rutas con capacidad y ventanas horarias."
+    />
+    <meta name="theme-color" content="#2563eb" />
+    <title>VRP Optimizer · Planificación de entregas</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Cpath d='M9 24V8h14v16M9 16h14' stroke='white' fill='none' stroke-width='3'/%3E%3C/svg%3E"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/static/css/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Saltar al contenido</a>
     <div class="app-container">
-        <!-- Sidebar -->
-        <nav class="sidebar">
-            <div class="sidebar-header">
-                <i class="fa-solid fa-route logo-icon"></i>
-                <h2>VRP Optimizer</h2>
+      <nav class="sidebar" aria-label="Navegación principal">
+        <div class="sidebar-header">
+          <i class="fa-solid fa-route logo-icon" aria-hidden="true"></i>
+          <div>
+            <h2>VRP Optimizer</h2>
+            <span class="brand-caption">Gestión logística</span>
+          </div>
+        </div>
+        <p class="nav-label">ESPACIO DE TRABAJO</p>
+        <ul class="nav-links">
+          <li>
+            <a
+              href="#dashboard"
+              data-target="dashboard"
+              class="active"
+              aria-current="page"
+              ><i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
+              Resumen</a
+            >
+          </li>
+          <li>
+            <a href="#orders" data-target="orders"
+              ><i class="fa-solid fa-box" aria-hidden="true"></i> Pedidos</a
+            >
+          </li>
+          <li>
+            <a href="#vehicles" data-target="vehicles"
+              ><i class="fa-solid fa-truck" aria-hidden="true"></i> Vehículos</a
+            >
+          </li>
+          <li>
+            <a href="#routing" data-target="routing"
+              ><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
+              Rutas</a
+            >
+          </li>
+        </ul>
+        <div class="sidebar-footer">
+          <strong>De la planificación a la entrega.</strong>Capacidad, horarios
+          y rutas en un solo lugar.
+        </div>
+      </nav>
+      <main class="main-content" id="main-content" tabindex="-1">
+        <header class="top-nav">
+          <div class="breadcrumb">
+            Operaciones <span aria-hidden="true"> / </span>
+            <strong id="current-screen">Resumen</strong>
+          </div>
+          <div class="header-actions">
+            <div class="search-bar">
+              <i class="fa-solid fa-search" aria-hidden="true"></i
+              ><input
+                id="global-search"
+                type="search"
+                aria-label="Buscar pedidos o vehículos"
+                placeholder="Buscar pedidos o vehículos…"
+              />
             </div>
-            <ul class="nav-links">
-                <li><a href="#" class="active" data-target="dashboard"><i class="fa-solid fa-chart-pie"></i>
-                        Dashboard</a></li>
-                <li><a href="#" data-target="orders"><i class="fa-solid fa-box"></i> Pedidos</a></li>
-                <li><a href="#" data-target="vehicles"><i class="fa-solid fa-truck"></i> Vehículos</a></li>
-                <li><a href="#" data-target="routing"><i class="fa-solid fa-map-location-dot"></i> Motor de Ruta</a>
-                </li>
-            </ul>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Header -->
-            <header class="top-nav">
-                <div class="search-bar">
-                    <i class="fa-solid fa-search"></i>
-                    <input type="text" placeholder="Buscar pedido, vehículo...">
-                </div>
-                <div class="user-profile">
-                    <button id="theme-toggle" class="btn" style="background: transparent; border: none; font-size: 1.2rem; color: var(--text-muted); cursor: pointer; padding: 0 10px;">
-                        <i class="fa-solid fa-moon"></i>
-                    </button>
-                    <div class="avatar">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
-                    <span>Administrador</span>
-                </div>
-            </header>
-
-            <!-- Sections -->
-            <div class="content-wrapper">
-
-                <!-- Dashboard Section -->
-                <section id="dashboard" class="view-section active">
-                    <div class="section-header">
-                        <h1 class="section-title">Resumen y Analíticas</h1>
-                        <button class="btn btn-accent" id="btn-seed-data"><i class="fa-solid fa-seedling"></i> Inyectar
-                            Datos DR</button>
-                    </div>
-                    <div class="stats-grid">
-                        <div class="stat-card glass style-card">
-                            <div class="icon-wrap tx-blue">
-                                <i class="fa-solid fa-cubes"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h3>Total Pedidos</h3>
-                                <p id="stat-orders">0</p>
-                            </div>
-                        </div>
-                        <div class="stat-card glass style-card">
-                            <div class="icon-wrap tx-green">
-                                <i class="fa-solid fa-truck-fast"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h3>Vehículos Disp.</h3>
-                                <p id="stat-vehicles">0</p>
-                            </div>
-                        </div>
-                        <div class="stat-card glass style-card">
-                            <div class="icon-wrap tx-purple">
-                                <i class="fa-solid fa-map"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h3>Rutas Generadas</h3>
-                                <p id="stat-routes">0</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="charts-grid mt-6" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div class="chart-container glass p-4" style="position: relative; height: 300px;">
-                            <h3 style="margin-bottom: 15px; color: var(--text-muted);">Demanda por Cliente (Top 10)</h3>
-                            <canvas id="demandChart"></canvas>
-                        </div>
-                        <div class="chart-container glass p-4" style="position: relative; height: 300px;">
-                            <h3 style="margin-bottom: 15px; color: var(--text-muted);">Métricas de Rutas de Entrega</h3>
-                            <canvas id="routeMetricsChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="recent-activity-container glass p-6 mt-6">
-                        <h2>Panel Rápido</h2>
-                        <p>Bienvenido al sistema VRP avanzado. Utiliza "Inyectar Datos DR" para llenar el sistema
-                            instantáneamente con ubicaciones en República Dominicana y 4 Vehículos.</p>
-                        <div class="quick-stats mt-4" style="display: flex; gap: 20px; font-weight: 500;">
-                            <div style="flex: 1; text-align: center; border-right: 1px solid rgba(255,255,255,0.1);">
-                                <span style="display: block; font-size: 0.9em; color: var(--text-muted);">Total Demanda (Uds)</span>
-                                <span id="stat-total-demand" style="font-size: 1.5em; color: #3b82f6;">0</span>
-                            </div>
-                            <div style="flex: 1; text-align: center; border-right: 1px solid rgba(255,255,255,0.1);">
-                                <span style="display: block; font-size: 0.9em; color: var(--text-muted);">Capacidad Total Flota</span>
-                                <span id="stat-total-capacity" style="font-size: 1.5em; color: #10b981;">0</span>
-                            </div>
-                            <div style="flex: 1; text-align: center;">
-                                <span style="display: block; font-size: 0.9em; color: var(--text-muted);">Distancia Total Estimada</span>
-                                <span id="stat-total-distance" style="font-size: 1.5em; color: #8b5cf6;">0 km</span>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Orders Section -->
-                <section id="orders" class="view-section hidden">
-                    <div class="section-header">
-                        <h1 class="section-title">Gestión de Pedidos</h1>
-                        <button class="btn btn-primary" onclick="prepareNewOrder()"><i
-                                class="fa-solid fa-plus"></i> Nuevo
-                            Pedido</button>
-                    </div>
-
-                    <div class="table-container glass mt-4">
-                        <table id="orders-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Cliente</th>
-                                    <th>Lat, Lng</th>
-                                    <th>Demanda</th>
-                                    <th>Ventana (min)</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Filled dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- Vehicles Section -->
-                <section id="vehicles" class="view-section hidden">
-                    <div class="section-header">
-                        <h1 class="section-title">Flota de Vehículos</h1>
-                        <button class="btn btn-primary" onclick="prepareNewVehicle()"><i
-                                class="fa-solid fa-plus"></i>
-                            Añadir Vehículo</button>
-                    </div>
-
-                    <div class="table-container glass mt-4">
-                        <table id="vehicles-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Nombre</th>
-                                    <th>Capacidad</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Filled dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- Routing Engine Section -->
-                <section id="routing" class="view-section hidden">
-                    <div class="section-header">
-                        <h1 class="section-title">Generación de Rutas Estratégicas</h1>
-                        <button class="btn btn-accent" id="btn-generate-routes"><i class="fa-solid fa-microchip"></i>
-                            Ejecutar VRP Solver</button>
-                    </div>
-
-                    <div class="route-results mt-4">
-                        <div class="map-container glass">
-                            <iframe id="map-iframe" src="" frameborder="0"></iframe>
-                            <div class="map-overlay" id="map-overlay">
-                                <p>Ejecuta el Solver para visualizar el mapa de rutas.</p>
-                            </div>
-                        </div>
-
-                        <div class="table-container glass mt-6">
-                            <h2>Resultados de Enrutamiento</h2>
-                            <table id="routes-table">
-                                <thead>
-                                    <tr>
-                                        <th>Ruta ID</th>
-                                        <th>Vehículo ID</th>
-                                        <th>Secuencia de Entrega</th>
-                                        <th>Distancia (km)</th>
-                                        <th>ETA (min)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Filled dynamically -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
+            <span class="status-pill" id="connection-status" role="status"
+              ><span class="status-dot"></span> Conectando</span
+            >
+            <button
+              id="theme-toggle"
+              class="icon-button"
+              aria-label="Cambiar a tema oscuro"
+              title="Cambiar tema"
+            >
+              <i class="fa-solid fa-moon" aria-hidden="true"></i>
+            </button>
+          </div>
+        </header>
+        <div class="content-wrapper">
+          <div id="data-error" class="error-banner hidden" role="alert">
+            <span>No se pudieron cargar los datos. Comprueba la conexión.</span
+            ><button id="retry-data" class="btn btn-secondary">
+              Reintentar
+            </button>
+          </div>
+          <section
+            id="dashboard"
+            class="view-section"
+            aria-labelledby="dashboard-title"
+          >
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Control de operaciones</p>
+                <h1 class="section-title" id="dashboard-title">
+                  Tu operación, de un vistazo
+                </h1>
+                <p class="section-description">
+                  Consulta la demanda, la disponibilidad de tu flota y el
+                  resultado de tu planificación.
+                </p>
+              </div>
+              <button class="btn btn-secondary" id="btn-seed-data">
+                <i class="fa-solid fa-seedling" aria-hidden="true"></i> Cargar
+                demostración
+              </button>
             </div>
-        </main>
+            <div class="stats-grid">
+              <div class="stat-card glass style-card">
+                <div class="icon-wrap tx-blue">
+                  <i class="fa-solid fa-box" aria-hidden="true"></i>
+                </div>
+                <div class="stat-info">
+                  <h3>Pedidos de entrega</h3>
+                  <p id="stat-orders">—</p>
+                  <small>Sin incluir el depósito</small>
+                </div>
+              </div>
+              <div class="stat-card glass style-card">
+                <div class="icon-wrap tx-green">
+                  <i class="fa-solid fa-truck" aria-hidden="true"></i>
+                </div>
+                <div class="stat-info">
+                  <h3>Vehículos disponibles</h3>
+                  <p id="stat-vehicles">—</p>
+                  <small>Flota registrada</small>
+                </div>
+              </div>
+              <div class="stat-card glass style-card">
+                <div class="icon-wrap tx-purple">
+                  <i class="fa-solid fa-route" aria-hidden="true"></i>
+                </div>
+                <div class="stat-info">
+                  <h3>Rutas planificadas</h3>
+                  <p id="stat-routes">—</p>
+                  <small>Vehículos con entregas asignadas</small>
+                </div>
+              </div>
+            </div>
+            <div class="charts-grid mt-6">
+              <div class="chart-container glass">
+                <div class="panel-header">
+                  <div>
+                    <h2>Demanda por cliente</h2>
+                    <p>Los 10 pedidos con mayor demanda</p>
+                  </div>
+                  <span class="badge">Unidades</span>
+                </div>
+                <div class="chart-area">
+                  <canvas
+                    id="demandChart"
+                    role="img"
+                    aria-label="Gráfico de demanda por cliente"
+                  ></canvas>
+                  <div class="chart-empty hidden" id="demand-empty">
+                    Añade pedidos para consultar la demanda.
+                  </div>
+                </div>
+              </div>
+              <div class="chart-container glass">
+                <div class="panel-header">
+                  <div>
+                    <h2>Distancia por vehículo</h2>
+                    <p>Comparación de las rutas planificadas</p>
+                  </div>
+                  <span class="badge">Kilómetros</span>
+                </div>
+                <div class="chart-area">
+                  <canvas
+                    id="routeMetricsChart"
+                    role="img"
+                    aria-label="Gráfico de distancia por vehículo"
+                  ></canvas>
+                  <div class="chart-empty hidden" id="routes-empty">
+                    Genera rutas para comparar las distancias.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="overview-panel glass mt-6">
+              <div>
+                <h2>Balance de la operación</h2>
+                <p id="planning-status">
+                  Registra un depósito, añade entregas y vehículos; después
+                  genera tu planificación.
+                </p>
+              </div>
+              <div class="analytics-summary">
+                <div class="stat-box">
+                  <span class="stat-label">Demanda total</span
+                  ><span id="stat-total-demand" class="stat-value">—</span>
+                </div>
+                <div class="stat-box">
+                  <span class="stat-label">Capacidad de flota</span
+                  ><span id="stat-total-capacity" class="stat-value">—</span>
+                </div>
+                <div class="stat-box">
+                  <span class="stat-label">Distancia estimada</span
+                  ><span id="stat-total-distance" class="stat-value">—</span>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section
+            id="orders"
+            class="view-section hidden"
+            aria-labelledby="orders-title"
+          >
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Gestión de entregas</p>
+                <h1 class="section-title" id="orders-title">Pedidos</h1>
+                <p class="section-description">
+                  Administra destinos, demanda y horarios de entrega.
+                </p>
+              </div>
+              <button class="btn btn-primary" id="new-order">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i> Nuevo pedido
+              </button>
+            </div>
+            <div class="table-container glass">
+              <div class="table-toolbar">
+                <h2>Listado de pedidos</h2>
+                <span id="orders-count">Cargando…</span>
+              </div>
+              <table id="orders-table">
+                <thead>
+                  <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Cliente / destino</th>
+                    <th scope="col">Coordenadas</th>
+                    <th scope="col">Demanda</th>
+                    <th scope="col">Horario</th>
+                    <th scope="col">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <p class="helper-note">
+              <i class="fa-solid fa-circle-info" aria-hidden="true"></i> El
+              primer registro es el depósito y debe tener demanda 0. Cambiar
+              pedidos invalida la planificación actual.
+            </p>
+          </section>
+          <section
+            id="vehicles"
+            class="view-section hidden"
+            aria-labelledby="vehicles-title"
+          >
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Recursos de transporte</p>
+                <h1 class="section-title" id="vehicles-title">Vehículos</h1>
+                <p class="section-description">
+                  Organiza la flota y define la capacidad de cada vehículo en la
+                  misma unidad que la demanda.
+                </p>
+              </div>
+              <button class="btn btn-primary" id="new-vehicle">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i> Añadir
+                vehículo
+              </button>
+            </div>
+            <div class="table-container glass">
+              <div class="table-toolbar">
+                <h2>Flota registrada</h2>
+                <span id="vehicles-count">Cargando…</span>
+              </div>
+              <table id="vehicles-table">
+                <thead>
+                  <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Vehículo</th>
+                    <th scope="col">Capacidad</th>
+                    <th scope="col">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <p class="helper-note">
+              Cambiar vehículos invalida las rutas actuales. Genera una nueva
+              planificación para aplicar los cambios.
+            </p>
+          </section>
+          <section
+            id="routing"
+            class="view-section hidden"
+            aria-labelledby="routing-title"
+          >
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Planificación de distribución</p>
+                <h1 class="section-title" id="routing-title">
+                  Rutas de entrega
+                </h1>
+                <p class="section-description">
+                  Asigna todas las entregas respetando la capacidad de la flota
+                  y las ventanas horarias.
+                </p>
+              </div>
+              <button class="btn btn-primary" id="btn-generate-routes">
+                <i class="fa-solid fa-route" aria-hidden="true"></i> Generar
+                rutas
+              </button>
+            </div>
+            <div id="route-stats-container"></div>
+            <div class="routing-layout">
+              <div class="map-container glass">
+                <iframe
+                  id="map-iframe"
+                  title="Mapa de rutas y paradas"
+                  src="about:blank"
+                ></iframe>
+                <div class="map-overlay" id="map-overlay" role="status">
+                  <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i
+                  ><strong>Tu próxima ruta empieza aquí</strong>
+                  <p>
+                    Genera una planificación para visualizar las entregas en el
+                    mapa.
+                  </p>
+                </div>
+              </div>
+              <aside class="capacity-panel glass">
+                <h2>Distribución de carga</h2>
+                <p>Capacidad utilizada por vehículo</p>
+                <div id="capacity-analysis-container">
+                  <p class="empty-panel">
+                    Las asignaciones aparecerán al generar las rutas.
+                  </p>
+                </div>
+              </aside>
+            </div>
+            <p class="helper-note">
+              Distancia de planificación en línea recta; duración estimada con
+              ETA e incluyendo esperas. El mapa usa trazados viales de OSRM.
+              Activa u oculta vehículos desde su selector de capas.
+            </p>
+            <div class="table-container glass mt-6">
+              <div class="table-toolbar">
+                <h2>Detalle de la planificación</h2>
+                <button id="export-routes" class="btn btn-secondary" disabled>
+                  <i class="fa-solid fa-download" aria-hidden="true"></i>
+                  Exportar CSV
+                </button>
+              </div>
+              <table id="routes-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Ruta</th>
+                    <th scope="col">Vehículo</th>
+                    <th scope="col">Secuencia de destinos</th>
+                    <th scope="col">Distancia estimada</th>
+                    <th scope="col">Duración estimada</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
     </div>
-
-    <!-- Modals -->
     <div class="modal-backdrop hidden" id="modal-order">
-        <div class="modal glass">
-            <div class="modal-header">
-                <h3 id="modal-order-title">Registrar Nuevo Pedido</h3>
-                <button class="close-btn" onclick="toggleModal('modal-order')"><i
-                        class="fa-solid fa-times"></i></button>
-            </div>
-            <form id="form-order" class="modal-form">
-                <input type="hidden" name="id" id="order-id">
-                <div class="form-group">
-                    <label>Nombre del Cliente</label>
-                    <input type="text" name="customer_name" required minlength="1" maxlength="100" pattern="^[\w\s\-áéíóúüñÁÉÍÓÚÜÑ]+$" title="Solo letras, números, espacios y guiones">
-                </div>
-                <div class="form-group row">
-                    <div class="col">
-                        <label>Latitud</label>
-                        <input type="number" step="any" name="lat" required min="-90" max="90" placeholder="Ej: 40.7128">
-                    </div>
-                    <div class="col">
-                        <label>Longitud</label>
-                        <input type="number" step="any" name="lng" required min="-180" max="180" placeholder="Ej: -74.0060">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Demanda (Ej: Cajas / Peso)</label>
-                    <input type="number" name="demand" required min="0" max="10000" placeholder="10">
-                </div>
-                <div class="form-group row">
-                    <div class="col">
-                        <label>Inicio Ventana (min)</label>
-                        <input type="number" name="window_start" value="0" required min="0" max="1440">
-                    </div>
-                    <div class="col">
-                        <label>Fin Ventana (min)</label>
-                        <input type="number" name="window_end" value="1440" required min="0" max="1440">
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary w-full mt-4" id="btn-order-submit">Guardar Pedido</button>
-            </form>
+      <div
+        class="modal glass"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-order-title"
+        tabindex="-1"
+      >
+        <div class="modal-header">
+          <h3 id="modal-order-title">Nuevo pedido</h3>
+          <button
+            class="close-btn"
+            type="button"
+            data-close="modal-order"
+            aria-label="Cerrar formulario"
+          >
+            <i class="fa-solid fa-times" aria-hidden="true"></i>
+          </button>
         </div>
+        <form id="form-order" class="modal-form">
+          <input type="hidden" name="id" id="order-id" />
+          <div class="form-group">
+            <label for="order-name">Nombre del cliente o depósito</label
+            ><input
+              id="order-name"
+              type="text"
+              name="customer_name"
+              required
+              maxlength="100"
+              autocomplete="organization"
+            />
+          </div>
+          <div class="form-group row">
+            <div class="col">
+              <label for="order-lat">Latitud</label
+              ><input
+                id="order-lat"
+                type="number"
+                step="any"
+                name="lat"
+                required
+                min="-90"
+                max="90"
+                placeholder="18.4861"
+              />
+            </div>
+            <div class="col">
+              <label for="order-lng">Longitud</label
+              ><input
+                id="order-lng"
+                type="number"
+                step="any"
+                name="lng"
+                required
+                min="-180"
+                max="180"
+                placeholder="-69.9312"
+              />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="order-demand">Demanda (unidades)</label
+            ><input
+              id="order-demand"
+              type="number"
+              name="demand"
+              required
+              min="0"
+              step="1"
+              placeholder="10"
+            />
+            <p class="form-hint">
+              Usa 0 para el depósito. El depósito debe ser el primer registro.
+            </p>
+          </div>
+          <div class="form-group row">
+            <div class="col">
+              <label for="order-start">Inicio (minutos del día)</label
+              ><input
+                id="order-start"
+                type="number"
+                name="window_start"
+                value="0"
+                required
+                min="0"
+                max="1440"
+                step="1"
+              />
+            </div>
+            <div class="col">
+              <label for="order-end">Fin (minutos del día)</label
+              ><input
+                id="order-end"
+                type="number"
+                name="window_end"
+                value="1440"
+                required
+                min="0"
+                max="1440"
+                step="1"
+              />
+            </div>
+          </div>
+          <p class="form-hint">0 = 00:00 · 480 = 08:00 · 1440 = 24:00</p>
+          <p id="order-error" class="form-error" role="alert"></p>
+          <button
+            type="submit"
+            class="btn btn-primary w-full"
+            id="btn-order-submit"
+          >
+            Guardar pedido
+          </button>
+        </form>
+      </div>
     </div>
-
     <div class="modal-backdrop hidden" id="modal-vehicle">
-        <div class="modal glass">
-            <div class="modal-header">
-                <h3 id="modal-vehicle-title">Añadir Vehículo</h3>
-                <button class="close-btn" onclick="toggleModal('modal-vehicle')"><i
-                        class="fa-solid fa-times"></i></button>
-            </div>
-            <form id="form-vehicle" class="modal-form">
-                <input type="hidden" name="id" id="vehicle-id">
-                <div class="form-group">
-                    <label>Identificador o Nombre (Ej: Camión 1)</label>
-                    <input type="text" name="name" required minlength="1" maxlength="100">
-                </div>
-                <div class="form-group">
-                    <label>Capacidad Máxima</label>
-                    <input type="number" name="capacity" required min="1" max="10000" placeholder="50">
-                </div>
-                <button type="submit" class="btn btn-primary w-full mt-4" id="btn-vehicle-submit">Guardar Vehículo</button>
-            </form>
+      <div
+        class="modal glass"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-vehicle-title"
+        tabindex="-1"
+      >
+        <div class="modal-header">
+          <h3 id="modal-vehicle-title">Añadir vehículo</h3>
+          <button
+            class="close-btn"
+            type="button"
+            data-close="modal-vehicle"
+            aria-label="Cerrar formulario"
+          >
+            <i class="fa-solid fa-times" aria-hidden="true"></i>
+          </button>
         </div>
+        <form id="form-vehicle" class="modal-form">
+          <input type="hidden" name="id" id="vehicle-id" />
+          <div class="form-group">
+            <label for="vehicle-name">Nombre del vehículo</label
+            ><input
+              id="vehicle-name"
+              type="text"
+              name="name"
+              required
+              maxlength="100"
+              placeholder="Camión de reparto 01"
+            />
+          </div>
+          <div class="form-group">
+            <label for="vehicle-capacity">Capacidad máxima (unidades)</label
+            ><input
+              id="vehicle-capacity"
+              type="number"
+              name="capacity"
+              required
+              min="1"
+              max="10000"
+              step="1"
+              placeholder="150"
+            />
+            <p class="form-hint">
+              Utiliza la misma unidad que en la demanda de tus pedidos.
+            </p>
+          </div>
+          <p id="vehicle-error" class="form-error" role="alert"></p>
+          <button
+            type="submit"
+            class="btn btn-primary w-full"
+            id="btn-vehicle-submit"
+          >
+            Guardar vehículo
+          </button>
+        </form>
+      </div>
     </div>
-
-    <!-- Notification Toast -->
-    <div id="toast" class="toast hidden">
-        <i class="fa-solid fa-info-circle"></i>
-        <span id="toast-message">Notificación</span>
+    <div id="toast" class="toast hidden" role="status" aria-live="polite">
+      <i class="fa-solid fa-circle-check" aria-hidden="true"></i
+      ><span id="toast-message"></span>
     </div>
-
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="/static/js/app.js?v=4"></script>
-</body>
-
+    <script
+      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"
+      defer
+    ></script>
+    <script src="/static/js/app.js" defer></script>
+  </body>
 </html>

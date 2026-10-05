@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field, field_validator
-from typing import List, Optional
-import re
+from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
+from typing import Optional
+
 
 class OrderBase(BaseModel):
     customer_name: str = Field(..., min_length=1, max_length=100)
@@ -10,25 +10,32 @@ class OrderBase(BaseModel):
     window_start: int = Field(default=0, ge=0, le=1440)
     window_end: int = Field(default=1440, ge=0, le=1440)
 
-    @field_validator('window_end')
-    @classmethod
-    def validate_window_end(cls, v, info):
-        if 'window_start' in info.data and v < info.data['window_start']:
+    @model_validator(mode="after")
+    def validate_window_end(self):
+        if self.window_end < self.window_start:
             raise ValueError('window_end must be >= window_start')
-        return v
+        return self
 
     @field_validator('customer_name')
     @classmethod
     def validate_customer_name(cls, v):
         v = v.strip()
-        if not re.match(r'^[\w\s\-áéíóúüñÁÉÍÓÚÜÑ]+$', v):
-            raise ValueError('customer_name contains invalid characters')
+        if not v:
+            raise ValueError('El nombre no puede estar vacío')
         return v
 
 class OrderCreate(OrderBase):
     pass
 
-class OrderUpdate(BaseModel):
+class UpdateBase(BaseModel):
+    @model_validator(mode="before")
+    @classmethod
+    def reject_null(cls, values):
+        if isinstance(values, dict) and any(value is None for value in values.values()):
+            raise ValueError("Los campos no pueden ser nulos")
+        return values
+
+class OrderUpdate(UpdateBase):
     customer_name: Optional[str] = Field(default=None, min_length=1, max_length=100)
     lat: Optional[float] = Field(default=None, ge=-90, le=90)
     lng: Optional[float] = Field(default=None, ge=-180, le=180)
@@ -39,25 +46,31 @@ class OrderUpdate(BaseModel):
 class Order(OrderBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class VehicleBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     capacity: int = Field(..., ge=1, le=10000)
 
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, value):
+        value = value.strip()
+        if not value:
+            raise ValueError("El nombre no puede estar vacío")
+        return value
+
 class VehicleCreate(VehicleBase):
     pass
 
-class VehicleUpdate(BaseModel):
+class VehicleUpdate(UpdateBase):
     name: Optional[str] = Field(default=None, min_length=1, max_length=100)
     capacity: Optional[int] = Field(default=None, ge=1, le=10000)
 
 class Vehicle(VehicleBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class RouteBase(BaseModel):
     vehicle_id: int
@@ -71,12 +84,9 @@ class RouteCreate(RouteBase):
 class Route(RouteBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
-class PaginatedResponse(BaseModel):
-    items: List
-    total: int
-    page: int
-    page_size: int
-    pages: int
+class StopTransfer(BaseModel):
+    from_vehicle: int = Field(gt=0)
+    to_vehicle: int = Field(gt=0)
+    stop_id: int = Field(gt=0)
